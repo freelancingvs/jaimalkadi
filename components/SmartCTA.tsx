@@ -24,8 +24,8 @@ function detectPlatform(): Platform {
 
 export default function SmartCTA({ eventType }: SmartCTAProps) {
   const [platform, setPlatform] = useState<Platform>(null);
-  const appStoreUrl = process.env.NEXT_PUBLIC_APP_STORE_URL || '#';
-  const playStoreUrl = process.env.NEXT_PUBLIC_PLAY_STORE_URL || '#';
+  const appStoreUrl = process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/us/app/sarab-sanjha-darbar/id6739017805';
+  const playStoreUrl = process.env.NEXT_PUBLIC_PLAY_STORE_URL || 'https://play.google.com/store/apps/details?id=com.app.sarabsanjhadarbar';
   const ctaText = CTA_TEXT[eventType] || 'Download the App';
 
   useEffect(() => {

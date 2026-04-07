@@ -103,10 +103,10 @@ export default function HeroSection({ loggedIn }: HeroSectionProps) {
           Official App
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Link href="https://apps.apple.com/in/app/sarab-sanjha-darbar/id6739017805" target="_blank" rel="noopener noreferrer">
+          <Link href={process.env.NEXT_PUBLIC_APP_STORE_URL || "https://apps.apple.com/us/app/sarab-sanjha-darbar/id6739017805"} target="_blank" rel="noopener noreferrer">
             <Image src="/apple.png" alt="App Store" width={isMobile ? 44 : 36} height={isMobile ? 44 : 36} style={{ display: 'block' }} />
           </Link>
-          <Link href="https://play.google.com/store/apps/details?id=com.app.sarabsanjhadarbar&hl=en_IN" target="_blank" rel="noopener noreferrer">
+          <Link href={process.env.NEXT_PUBLIC_PLAY_STORE_URL || "https://play.google.com/store/apps/details?id=com.app.sarabsanjhadarbar"} target="_blank" rel="noopener noreferrer">
             <Image src="/playstore.png" alt="Google Play" width={isMobile ? 44 : 36} height={isMobile ? 44 : 36} style={{ display: 'block' }} />
           </Link>
         </div>
@@ -309,10 +309,10 @@ export default function HeroSection({ loggedIn }: HeroSectionProps) {
                 Download the official App
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Link href="https://apps.apple.com/in/app/sarab-sanjha-darbar/id6739017805" target="_blank" rel="noopener noreferrer">
+                <Link href={process.env.NEXT_PUBLIC_APP_STORE_URL || "https://apps.apple.com/us/app/sarab-sanjha-darbar/id6739017805"} target="_blank" rel="noopener noreferrer">
                   <Image src="/apple.png" alt="App Store" width={36} height={36} style={{ display: 'block' }} />
                 </Link>
-                <Link href="https://play.google.com/store/apps/details?id=com.app.sarabsanjhadarbar&hl=en_IN" target="_blank" rel="noopener noreferrer">
+                <Link href={process.env.NEXT_PUBLIC_PLAY_STORE_URL || "https://play.google.com/store/apps/details?id=com.app.sarabsanjhadarbar"} target="_blank" rel="noopener noreferrer">
                   <Image src="/playstore.png" alt="Google Play" width={36} height={36} style={{ display: 'block' }} />
                 </Link>
               </div>

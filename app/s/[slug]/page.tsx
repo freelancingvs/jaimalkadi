@@ -18,39 +18,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Link not found — Sarab Sanjha Darbar' };
   }
 
-  // FORCE: ALWAYS use the live domain as the base
-  let appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.sarabsanjhadarbar.com').replace(/\/$/, '');
-  if (appUrl.includes('vercel.app')) {
-    appUrl = 'https://www.sarabsanjhadarbar.com';
-  }
+  // 1. Same base URL logic as layout.tsx for absolute consistency
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.includes('vercel.app') 
+    ? 'https://www.sarabsanjhadarbar.com' 
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://www.sarabsanjhadarbar.com');
+  
+  const appUrl = baseUrl.replace(/\/$/, '');
   const pageUrl = `${appUrl}/s/${slug}`;
 
-  // 1. Clean Title
+  // 2. Clean Title
   const title = card.title || 'Sarab Sanjha Darbar';
 
-  // 2. Clear clean description (WhatsApp-friendly)
-  let description = card.message
+  // 3. WhatsApp-friendly description
+  let descriptionText = card.message
     ? card.message.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
     : 'Connecting the community through events, music and shared experiences.';
 
   if (card.type === 'event' && card.location) {
-    description = `📍 Location: ${card.location}\n\n${description}`;
-  } else if (card.type === 'music') {
-    description = `🎵 Track Preview\n\n${description}`;
+    descriptionText = `📍 Location: ${card.location} | ${descriptionText}`;
   }
 
-  // Final length cap & strip newlines for crawler compatibility
-  const cleanDescription = description.replace(/\n+/g, ' ').slice(0, 200).trim();
+  const cleanDescription = descriptionText.slice(0, 200).trim();
 
-  // 3. Absolute Image URL Construction (Using Proxy for WhatsApp Reliability)
-  // Short internal URLs are more reliable for WhatsApp/FB crawlers
-  const imageUrl = `${appUrl}/api/og-image/${slug}`;
+  // 4. Use relative image path (proxied) — Next.js will make it absolute via metadataBase
+  // Fallback to default thumbnail if card image is missing
+  const imageUrl = card.imageUrl ? `/api/og-image/${slug}` : '/thumbnail.jpg';
 
   return {
     title,
     description: cleanDescription,
     metadataBase: new URL(appUrl),
-    alternates: { canonical: pageUrl },
+    alternates: {
+      canonical: `/s/${slug}`,
+    },
     openGraph: {
       title,
       description: cleanDescription,
@@ -73,17 +73,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: cleanDescription,
       images: [imageUrl],
     },
-    icons: {
-      other: [
-        {
-          rel: 'image_src',
-          url: imageUrl,
-        },
-      ],
-    },
-    other: {
-      'itemprop': 'image',
-    }
   };
 }
 

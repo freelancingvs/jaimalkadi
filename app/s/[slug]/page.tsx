@@ -42,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // 4. Use relative image path (proxied) — Next.js will make it absolute via metadataBase
   // Fallback to default thumbnail if card image is missing
-  const imageUrl = card.imageUrl ? `/api/og-image/${slug}` : '/thumbnail.jpg';
+  // Extra Extension trick for WhatsApp crawler
+  const imageUrl = card.imageUrl ? `/api/og-image/${slug}?image.jpg` : '/thumbnail.jpg';
 
   return {
     title,
@@ -64,6 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           width: 1200,
           height: 630,
           alt: title,
+          type: 'image/jpeg',
         },
       ],
     },

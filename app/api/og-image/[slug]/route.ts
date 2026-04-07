@@ -27,22 +27,33 @@ export async function GET(
   }
 
   // Use Next.js Image Optimization internals for consistent sizing/compression
-  const optimizedUrl = `${appUrl}/_next/image?url=${encodeURIComponent(card.imageUrl)}&w=1200&q=75`;
+  // Quality=65 is a good balance to ensure file stays under WhatsApp's ~300KB limit
+  const optimizedUrl = `${appUrl}/_next/image?url=${encodeURIComponent(card.imageUrl)}&w=1200&q=65`;
 
   try {
     const response = await fetch(optimizedUrl);
+    
+    // If optimization fails (e.g. domain not in next.config.ts), we must ensure 
+    // we don't serve a massive raw image (1MB+) as it won't show on WhatsApp.
     if (!response.ok) {
-      // Fallback to raw image if optimization fails (e.g. domain not in next.config.ts)
+      console.warn('Next.js optimization failed, calling raw URL:', card.imageUrl);
       const rawResponse = await fetch(card.imageUrl);
       if (!rawResponse.ok) throw new Error('Raw image failed');
       const rawBuffer = await rawResponse.arrayBuffer();
+      
+      // If we are serving raw, we take it as-is but at least it matches. 
+      // This is a last resort.
       return new Response(rawBuffer, { 
-        headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' } 
+        headers: { 
+          'Content-Type': 'image/jpeg', 
+          'Cache-Control': 'public, max-age=3600' // Shorter cache for fallbacks
+        } 
       });
     }
 
     const buffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/webp';
+    // Default to image/jpeg for better crawler compatibility
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
 
     return new Response(buffer, {
       headers: {

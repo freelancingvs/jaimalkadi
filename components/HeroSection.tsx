@@ -21,9 +21,12 @@ export default function HeroSection({ loggedIn }: HeroSectionProps) {
     const audio = audioRef.current;
     const video = videoRef.current;
 
-    // ── Try playing audio with sound immediately ──
+    // ── Check if mobile (matching Tailwind's sm breakpoint) ──
+    const isMobile = () => window.innerWidth < 640;
+
+    // ── Try playing audio with sound immediately (MOBILE ONLY) ──
     const tryUnmutedAudio = () => {
-      if (!audio) return;
+      if (!audio || !isMobile()) return;
       audio.muted = false;
       audio.play().then(() => {
         setMuted(false);
@@ -52,7 +55,13 @@ export default function HeroSection({ loggedIn }: HeroSectionProps) {
     const handleInteraction = () => {
       if (unmuteAttempted.current) return;
       unmuteAttempted.current = true;
-      if (audio) { audio.muted = false; }
+      
+      // Only unmute audio if on mobile
+      if (audio && isMobile()) { 
+        audio.muted = false; 
+        audio.play().catch(() => {});
+      }
+      
       if (video) { video.muted = false; }
       setMuted(false);
     };
@@ -73,8 +82,19 @@ export default function HeroSection({ loggedIn }: HeroSectionProps) {
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     const newMuted = !muted;
+    const isMobile = window.innerWidth < 640;
+
     if (videoRef.current) videoRef.current.muted = newMuted;
-    if (audioRef.current) audioRef.current.muted = newMuted;
+    
+    // Only toggle audio if on mobile
+    if (audioRef.current && isMobile) {
+      audioRef.current.muted = newMuted;
+    } else if (audioRef.current) {
+      // Ensure audio is muted on desktop regardless of toggle (which controls video)
+      audioRef.current.muted = true;
+      audioRef.current.pause();
+    }
+
     setMuted(newMuted);
     unmuteAttempted.current = true;
   };

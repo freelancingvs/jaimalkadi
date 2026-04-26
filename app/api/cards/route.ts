@@ -33,8 +33,7 @@ async function saveFile(file: File, slug: string, prefix: string): Promise<strin
   const buffer = Buffer.from(await file.arrayBuffer());
   fs.writeFileSync(path.join(uploadsDir, filename), buffer);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  return `${appUrl}/uploads/${prefix}/${filename}`;
+  return `/uploads/${prefix}/${filename}`;
 }
 
 // GET /api/cards — list all cards (admin only check done in UI, but guard here too)

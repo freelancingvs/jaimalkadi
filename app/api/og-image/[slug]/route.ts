@@ -3,6 +3,15 @@ import { getCard } from '@/lib/cards';
 
 export const dynamic = 'force-dynamic';
 
+function sanitizeUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  // If URL contains localhost:3000, strip the origin to make it relative
+  if (url.includes('localhost:3000')) {
+    return url.replace(/^https?:\/\/localhost:3000/, '');
+  }
+  return url;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -26,9 +35,12 @@ export async function GET(
     });
   }
 
+  const imageUrl = sanitizeUrl(card.imageUrl);
+  if (!imageUrl) return new Response('Not Found', { status: 404 });
+
   // Use Next.js Image Optimization internals for consistent sizing/compression
-  // Quality=65 is a good balance to ensure file stays under WhatsApp's ~300KB limit
-  const optimizedUrl = `${appUrl}/_next/image?url=${encodeURIComponent(card.imageUrl)}&w=1200&q=65`;
+  // w=800 and q=50 to strictly stay under WhatsApp's 300KB limit for thumbnails
+  const optimizedUrl = `${appUrl}/_next/image?url=${encodeURIComponent(imageUrl)}&w=800&q=50`;
 
   try {
     const response = await fetch(optimizedUrl);

@@ -3,9 +3,20 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import SmartCTA from '@/components/SmartCTA';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+function sanitizeUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  // If URL contains localhost:3000, strip the origin to make it relative
+  // This fixes broken images when accessing from mobile/IP in dev
+  if (url.includes('localhost:3000')) {
+    return url.replace(/^https?:\/\/localhost:3000/, '');
+  }
+  return url;
 }
 
 // ── OG Meta Tags ─────────────────────────────────────────────────────────────
@@ -26,10 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const appUrl = baseUrl.replace(/\/$/, '');
   const pageUrl = `${appUrl}/s/${slug}`;
 
-  // 2. Clean Title
+  // 2. Clean Title & Description
   const title = card.title || 'Sarab Sanjha Darbar';
-
-  // 3. WhatsApp-friendly description
   let descriptionText = card.message
     ? card.message.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
     : 'Connecting the community through events, music and shared experiences.';
@@ -39,11 +48,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const cleanDescription = descriptionText.slice(0, 200).trim();
+  const displayTitle = card.location ? `${title} — ${card.location}` : title;
 
-  // 4. Use relative image path (proxied) — Next.js will make it absolute via metadataBase
-  // Fallback to default thumbnail if card image is missing
-  // Extra Extension trick for WhatsApp crawler
-  const imageUrl = card.imageUrl ? `/api/og-image/${slug}?image.jpg` : '/thumbnail.jpg';
+  // 3. Use ABSOLUTE image path for maximum crawler compatibility
+  const imageUrl = card.imageUrl 
+    ? `${appUrl}/api/og-image/${slug}?image.jpg` 
+    : `${appUrl}/thumbnail.jpg`;
 
   return {
     title,
@@ -53,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `/s/${slug}`,
     },
     openGraph: {
-      title,
+      title: displayTitle,
       description: cleanDescription,
       url: pageUrl,
       siteName: 'Sarab Sanjha Darbar',
@@ -62,16 +72,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
+          width: 800, // Matched to our optimized width
+          height: 420,
+          alt: displayTitle,
           type: 'image/jpeg',
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: displayTitle,
       description: cleanDescription,
       images: [imageUrl],
     },
@@ -101,23 +111,65 @@ function getMapEmbedUrl(url: string): string | null {
 
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#0A0A0A] flex flex-col">
-      {/* Top bar */}
-      <header className="flex items-center px-5 py-4 border-b border-white/[0.06]">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-md shadow-amber-900/30">
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <circle cx="12" cy="12" r="9" />
-              <path strokeLinecap="round" d="M12 7v5l3 3" />
-            </svg>
-          </div>
-          <span className="text-sm font-semibold text-white tracking-tight">Sarab Sanjha Darbar</span>
-        </Link>
+    <main 
+      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat bg-fixed relative"
+      style={{ backgroundImage: 'url(/overall-bg.jpg)' }}
+    >
+      {/* Overlay to ensure contrast */}
+      <div className="fixed inset-0 bg-black/40 -z-10" />
+
+      {/* Header — matching HeroSection layout */}
+      <header className="relative z-50 w-full">
+        {/* Desktop Header: Logo Left, Text Right */}
+        <div className="hidden sm:flex items-start justify-between px-8 py-7">
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            <Image
+              src="/logo.png"
+              alt="Sarab Sanjha Darbar Logo"
+              width={56}
+              height={56}
+              className="rounded-full"
+              priority
+            />
+          </Link>
+          <Image
+            src="/sarab-sanjha-darbar.png"
+            alt="Sarab Sanjha Darbar"
+            width={240}
+            height={76}
+            style={{ objectFit: 'contain', objectPosition: 'right top' }}
+            priority
+          />
+        </div>
+
+        {/* Mobile Header: Centered Logo */}
+        <div className="flex sm:hidden justify-center pt-6 pb-2">
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            <Image
+              src="/mobile_logo.png"
+              alt="Sarab Sanjha Darbar"
+              width={236}
+              height={126}
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+          </Link>
+        </div>
       </header>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col">{children}</div>
+      <div className="flex-1 flex flex-col relative z-10">{children}</div>
     </main>
+  );
+}
+
+function CardContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex-1 px-4 py-8 sm:px-6 sm:py-12 max-w-xl mx-auto w-full flex flex-col">
+      <div className="bg-[#0d0d0d] backdrop-blur-2xl rounded-[2.5rem] border border-white/30 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)] p-6 sm:p-10 flex flex-col gap-8">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -143,13 +195,16 @@ export default async function SharePage({ params }: Props) {
 
   if (!card) notFound();
 
+  const imageUrl = sanitizeUrl(card.imageUrl);
+  const audioUrl = sanitizeUrl(card.audioUrl);
+
   // ── EVENT PAGE ──────────────────────────────────────────────────────────────
   if (card.type === 'event') {
     const embedUrl = card.mapUrl ? getMapEmbedUrl(card.mapUrl) : null;
 
     return (
       <PageShell>
-        <div className="flex-1 px-5 py-8 max-w-lg mx-auto w-full flex flex-col gap-8">
+        <CardContainer>
           {/* Badge + Title */}
           <div className="flex flex-col gap-3">
             <span className={`self-start inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${TYPE_STYLES.event}`}>
@@ -164,20 +219,20 @@ export default async function SharePage({ params }: Props) {
           </div>
 
           {/* Hero Image */}
-          {card.imageUrl && (
+          {imageUrl && (
             <div className="rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03] aspect-video relative group">
               <img
-                src={card.imageUrl}
+                src={imageUrl}
                 alt={card.title}
                 className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
             </div>
           )}
 
           {/* Location */}
           {card.location && (
-            <div className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
+            <div className="flex items-start gap-3 rounded-xl border border-white/[0.1] bg-white/[0.05] px-4 py-3">
               <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -226,7 +281,7 @@ export default async function SharePage({ params }: Props) {
 
           {/* Smart CTA */}
           <SmartCTA eventType="event" />
-        </div>
+        </CardContainer>
       </PageShell>
     );
   }
@@ -235,7 +290,7 @@ export default async function SharePage({ params }: Props) {
   if (card.type === 'music') {
     return (
       <PageShell>
-        <div className="flex-1 px-5 py-8 max-w-lg mx-auto w-full flex flex-col gap-8">
+        <CardContainer>
           {/* Badge + Title */}
           <div className="flex flex-col gap-3">
             <span className={`self-start inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${TYPE_STYLES.music}`}>
@@ -250,20 +305,20 @@ export default async function SharePage({ params }: Props) {
           </div>
 
           {/* Hero Image */}
-          {card.imageUrl && (
+          {imageUrl && (
             <div className="rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03] aspect-video relative group">
               <img
-                src={card.imageUrl}
+                src={imageUrl}
                 alt={card.title}
                 className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
             </div>
           )}
 
           {/* Audio player */}
-          {card.audioUrl && (
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 flex flex-col gap-4">
+          {audioUrl && (
+            <div className="rounded-2xl border border-white/[0.1] bg-white/[0.05] p-5 flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                   <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -272,13 +327,13 @@ export default async function SharePage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-white">{card.title}</p>
-                  <p className="text-xs text-zinc-600 mt-0.5">Preview track</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Preview track</p>
                 </div>
               </div>
               {/* Native audio player */}
               <audio
                 controls
-                src={card.audioUrl}
+                src={audioUrl}
                 className="w-full rounded-lg"
                 style={{ colorScheme: 'dark' }}
                 preload="metadata"
@@ -301,7 +356,7 @@ export default async function SharePage({ params }: Props) {
 
           {/* Smart CTA */}
           <SmartCTA eventType="music" />
-        </div>
+        </CardContainer>
       </PageShell>
     );
   }
@@ -309,7 +364,7 @@ export default async function SharePage({ params }: Props) {
   // ── PROMOTION PAGE ──────────────────────────────────────────────────────────
   return (
     <PageShell>
-      <div className="flex-1 px-5 py-8 max-w-lg mx-auto w-full flex flex-col gap-8">
+      <CardContainer>
         {/* Badge */}
         <div className="flex flex-col gap-3">
           <span className={`self-start inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${TYPE_STYLES.promotion}`}>
@@ -323,26 +378,26 @@ export default async function SharePage({ params }: Props) {
           <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
             Sarab Sanjha Darbar
           </h1>
-          <p className="text-zinc-500 text-sm">
+          <p className="text-zinc-400 text-sm">
             Connecting the community through events, music and shared experiences.
           </p>
         </div>
 
         {/* Hero Image */}
-        {card.imageUrl && (
+        {imageUrl && (
           <div className="rounded-2xl overflow-hidden border border-white/[0.07] bg-white/[0.03] aspect-video relative group">
             <img
-              src={card.imageUrl}
+              src={imageUrl}
               alt={card.title}
               className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/60 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
           </div>
         )}
 
         {/* Rich text message */}
         {card.message && card.message !== '<p></p>' && (
-          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
             <div
               className="prose prose-invert prose-sm max-w-none text-zinc-300 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: card.message }}
@@ -355,7 +410,7 @@ export default async function SharePage({ params }: Props) {
 
         {/* Smart CTA */}
         <SmartCTA eventType="promotion" />
-      </div>
+      </CardContainer>
     </PageShell>
   );
 }

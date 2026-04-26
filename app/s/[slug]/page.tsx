@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import SmartCTA from '@/components/SmartCTA';
 import Link from 'next/link';
 import Image from 'next/image';
+import BackgroundAudio from '@/components/BackgroundAudio';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -72,8 +73,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
-          width: 800, // Matched to our optimized width
-          height: 420,
+          width: 640, 
+          height: 360,
           alt: displayTitle,
           type: 'image/jpeg',
         },
@@ -117,6 +118,9 @@ function PageShell({ children }: { children: React.ReactNode }) {
     >
       {/* Overlay to ensure contrast */}
       <div className="fixed inset-0 bg-black/40 -z-10" />
+
+      {/* Background Audio */}
+      <BackgroundAudio />
 
       {/* Header — matching HeroSection layout */}
       <header className="relative z-50 w-full">

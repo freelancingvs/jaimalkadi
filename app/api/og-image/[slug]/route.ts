@@ -20,9 +20,15 @@ export async function GET(
   const card = await getCard(slug);
 
   // Determine base URL, favoring the production domain for reliability
-  let appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.sarabsanjhadarbar.com').replace(/\/$/, '');
-  if (appUrl.includes('vercel.app')) {
-    appUrl = 'https://www.sarabsanjhadarbar.com';
+  const host = request.headers.get('host') || '';
+  let appUrl = 'https://www.sarabsanjhadarbar.com';
+  
+  if (host.includes('localhost')) {
+    appUrl = `http://${host}`;
+  } else if (host.includes('vercel.app')) {
+    appUrl = `https://${host}`;
+  } else if (host.includes('sarabsanjhadarbar.com')) {
+    appUrl = host.includes('www.') ? 'https://www.sarabsanjhadarbar.com' : 'https://sarabsanjhadarbar.com';
   }
 
   // Fallback if no card or no user image
@@ -39,11 +45,15 @@ export async function GET(
   if (!imageUrl) return new Response('Not Found', { status: 404 });
 
   // Use Next.js Image Optimization internals for consistent sizing/compression
-  // w=800 and q=50 to strictly stay under WhatsApp's 300KB limit for thumbnails
-  const optimizedUrl = `${appUrl}/_next/image?url=${encodeURIComponent(imageUrl)}&w=800&q=50`;
+  // w=600 is perfect for a WhatsApp thumbnail and keeps file size very low
+  const optimizedUrl = `${appUrl}/_next/image?url=${encodeURIComponent(imageUrl)}&w=640&q=60`;
 
   try {
-    const response = await fetch(optimizedUrl);
+    const response = await fetch(optimizedUrl, {
+      headers: {
+        'Accept': 'image/jpeg,image/png,image/*;q=0.8'
+      }
+    });
     
     // If optimization fails (e.g. domain not in next.config.ts), we must ensure 
     // we don't serve a massive raw image (1MB+) as it won't show on WhatsApp.
@@ -64,13 +74,12 @@ export async function GET(
     }
 
     const buffer = await response.arrayBuffer();
-    // Default to image/jpeg for better crawler compatibility
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
-
+    
     return new Response(buffer, {
       headers: {
-        'Content-Type': contentType,
+        'Content-Type': 'image/jpeg', // Force jpeg for maximum compatibility
         'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Length': buffer.byteLength.toString(),
       },
     });
   } catch (err) {

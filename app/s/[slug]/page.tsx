@@ -53,9 +53,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const displayTitle = card.location ? `${title} — ${card.location}` : title;
 
   // 3. Use ABSOLUTE image path for maximum crawler compatibility
-  const imageUrl = card.imageUrl 
-    ? `${appUrl}/api/og-image/${slug}?image.jpg` 
-    : `${appUrl}/thumbnail.jpg`;
+  // We point directly to the image file just like the homepage does with thumbnail.jpg
+  let imageUrl = `${appUrl}/thumbnail.jpg`;
+  if (card.imageUrl) {
+    if (card.imageUrl.startsWith('http')) {
+      imageUrl = card.imageUrl;
+    } else {
+      imageUrl = `${appUrl}${card.imageUrl.startsWith('/') ? '' : '/'}${card.imageUrl}`;
+    }
+  }
 
   return {
     title,
@@ -74,10 +80,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
-          width: 640, 
-          height: 360,
+          width: 1200, 
+          height: 630,
           alt: displayTitle,
-          type: 'image/jpeg',
         },
       ],
     },

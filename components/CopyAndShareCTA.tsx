@@ -5,9 +5,10 @@ import { useState } from 'react';
 interface CopyAndShareCTAProps {
   title?: string;
   location?: string;
+  imageUrl?: string;
 }
 
-export default function CopyAndShareCTA({ title, location }: CopyAndShareCTAProps) {
+export default function CopyAndShareCTA({ title, location, imageUrl }: CopyAndShareCTAProps) {
   const [showSnackbar, setShowSnackbar] = useState(false);
 
   const handleAction = async () => {
@@ -16,16 +17,35 @@ export default function CopyAndShareCTA({ title, location }: CopyAndShareCTAProp
       title ? `🌟 *${title}*` : '🌟 *Sarab Sanjha Darbar*',
       location ? `📍 Location: ${location}` : null,
       '',
-      `Check it out here: ${pageUrl}`
+      `ਵਧੇਰੇ ਜਾਣਕਾਰੀ (More Details): ${pageUrl}`
     ].filter(Boolean).join('\n');
 
     if (navigator.share) {
       try {
-        await navigator.share({
+        const shareData: ShareData = {
           title: title || 'Sarab Sanjha Darbar',
           text: shareText,
           url: pageUrl,
-        });
+        };
+
+        // Try to include the image file if available
+        if (imageUrl && navigator.canShare && navigator.canShare({ files: [] })) {
+          try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], 'image.jpg', { type: blob.type });
+            
+            if (navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+              // When sharing a file, some platforms ignore the 'text' if 'url' is present,
+              // or vice versa. We include both for best compatibility.
+            }
+          } catch (e) {
+            console.warn('Could not fetch image for sharing:', e);
+          }
+        }
+
+        await navigator.share(shareData);
         return;
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;

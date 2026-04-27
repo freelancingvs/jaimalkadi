@@ -214,6 +214,14 @@ export default async function SharePage({ params }: Props) {
   const imageUrl = sanitizeUrl(card.imageUrl);
   const audioUrl = sanitizeUrl(card.audioUrl);
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.includes('vercel.app') 
+    ? 'https://www.sarabsanjhadarbar.com' 
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://www.sarabsanjhadarbar.com');
+  const appUrl = baseUrl.replace(/\/$/, '');
+  const fullImageUrl = card.imageUrl 
+    ? (card.imageUrl.startsWith('http') ? card.imageUrl : `${appUrl}${card.imageUrl.startsWith('/') ? '' : '/'}${card.imageUrl}`)
+    : undefined;
+
   // ── EVENT PAGE ──────────────────────────────────────────────────────────────
   if (card.type === 'event') {
     const embedUrl = card.mapUrl ? getMapEmbedUrl(card.mapUrl) : null;
@@ -293,7 +301,7 @@ export default async function SharePage({ params }: Props) {
           )}
 
           {/* Copy and Share */}
-          <CopyAndShareCTA title={card.title} location={card.location} />
+          <CopyAndShareCTA title={card.title} location={card.location} imageUrl={fullImageUrl} />
 
           {/* Decorative divider */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
@@ -371,7 +379,7 @@ export default async function SharePage({ params }: Props) {
           )}
 
           {/* Copy and Share */}
-          <CopyAndShareCTA title={card.title} />
+          <CopyAndShareCTA title={card.title} imageUrl={fullImageUrl} />
 
           {/* Decorative divider */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
@@ -428,7 +436,7 @@ export default async function SharePage({ params }: Props) {
         )}
 
         {/* Copy and Share */}
-        <CopyAndShareCTA title={card.title || "Promotion"} />
+        <CopyAndShareCTA title={card.title || "Promotion"} imageUrl={fullImageUrl} />
 
         {/* Decorative divider */}
         <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />

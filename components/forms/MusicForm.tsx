@@ -7,13 +7,19 @@ import ImageUpload from '@/components/ImageUpload';
 interface MusicFormProps {
   onSubmit: (data: FormData) => void;
   loading: boolean;
+  initialData?: {
+    title?: string;
+    message?: string;
+    audioUrl?: string;
+    imageUrl?: string;
+  };
 }
 
-export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
-  const [title, setTitle] = useState('');
+export default function MusicForm({ onSubmit, loading, initialData }: MusicFormProps) {
+  const [title, setTitle] = useState(initialData?.title || '');
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [image, setImage] = useState<File | null>(null);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialData?.message || '');
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,7 +35,11 @@ export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <ImageUpload label="Featured Image (for WhatsApp share)" onImageSelect={setImage} />
+      <ImageUpload 
+        label="Featured Image (for WhatsApp share)" 
+        onImageSelect={setImage} 
+        initialPreview={initialData?.imageUrl}
+      />
 
       {/* Title */}
       <div className="flex flex-col gap-1.5">
@@ -49,12 +59,12 @@ export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
       {/* Audio Upload */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-          Audio File <span className="text-red-400">*</span>
+          Audio File {initialData?.audioUrl ? '(Change)' : <span className="text-red-400">*</span>}
         </label>
         <div
           onClick={() => fileRef.current?.click()}
           className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors ${
-            audioFile
+            audioFile || initialData?.audioUrl
               ? 'border-amber-500/40 bg-amber-500/5'
               : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]'
           }`}
@@ -69,6 +79,18 @@ export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
               <div className="text-center">
                 <p className="text-sm text-amber-400 font-medium truncate max-w-[200px]">{audioFile.name}</p>
                 <p className="text-xs text-zinc-500 mt-0.5">{(audioFile.size / 1024 / 1024).toFixed(2)} MB — click to change</p>
+              </div>
+            </>
+          ) : initialData?.audioUrl ? (
+            <>
+              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                 <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-zinc-300 font-medium">Existing audio track</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Click to replace with new file</p>
               </div>
             </>
           ) : (
@@ -89,7 +111,7 @@ export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
             type="file"
             accept="audio/*"
             className="sr-only"
-            required
+            required={!initialData?.audioUrl}
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) setAudioFile(file);
@@ -113,7 +135,7 @@ export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
       {/* Submit */}
       <button
         type="submit"
-        disabled={loading || !audioFile}
+        disabled={loading || (!audioFile && !initialData?.audioUrl)}
         id="music-form-submit"
         className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold py-3 text-sm shadow-lg shadow-amber-900/30 hover:from-amber-400 hover:to-amber-500 active:scale-[0.98] transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
       >
@@ -123,10 +145,10 @@ export default function MusicForm({ onSubmit, loading }: MusicFormProps) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Uploading…
+            {initialData ? 'Saving...' : 'Uploading…'}
           </span>
         ) : (
-          'Add Music Card'
+          initialData ? 'Save Changes' : 'Add Music Card'
         )}
       </button>
     </form>

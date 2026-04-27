@@ -6,10 +6,11 @@ interface ImageUploadProps {
   label: string;
   onImageSelect: (file: File | null) => void;
   aspectRatio?: string; // e.g. "1.91/1"
+  initialPreview?: string;
 }
 
-export default function ImageUpload({ label, onImageSelect, aspectRatio = '1.91/1' }: ImageUploadProps) {
-  const [preview, setPreview] = useState<string | null>(null);
+export default function ImageUpload({ label, onImageSelect, aspectRatio = '1.91/1', initialPreview }: ImageUploadProps) {
+  const [preview, setPreview] = useState<string | null>(initialPreview || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

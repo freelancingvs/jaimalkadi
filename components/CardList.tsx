@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getAllCards } from '@/lib/cards';
 import CopyLinkButton from '@/components/CopyLinkButton';
 import DeleteCardButton from '@/components/DeleteCardButton';
+import EditCardButton from '@/components/EditCardButton';
 
 const TYPE_LABELS: Record<string, string> = {
   event: 'Event',
@@ -135,6 +136,7 @@ export default async function CardList() {
               >
                 Preview ↗
               </Link>
+              <EditCardButton card={card} />
               <div className="ml-auto">
                 <DeleteCardButton slug={card.slug} />
               </div>

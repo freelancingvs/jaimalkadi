@@ -7,13 +7,20 @@ import ImageUpload from '@/components/ImageUpload';
 interface EventFormProps {
   onSubmit: (data: FormData) => Promise<void>;
   loading: boolean;
+  initialData?: {
+    title?: string;
+    location?: string;
+    mapUrl?: string;
+    message?: string;
+    imageUrl?: string;
+  };
 }
 
-export default function EventForm({ onSubmit, loading }: EventFormProps) {
-  const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [mapUrl, setMapUrl] = useState('');
-  const [message, setMessage] = useState('');
+export default function EventForm({ onSubmit, loading, initialData }: EventFormProps) {
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [location, setLocation] = useState(initialData?.location || '');
+  const [mapUrl, setMapUrl] = useState(initialData?.mapUrl || '');
+  const [message, setMessage] = useState(initialData?.message || '');
   const [image, setImage] = useState<File | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -30,7 +37,11 @@ export default function EventForm({ onSubmit, loading }: EventFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <ImageUpload label="Featured Image (for WhatsApp share)" onImageSelect={setImage} />
+      <ImageUpload 
+        label="Featured Image (for WhatsApp share)" 
+        onImageSelect={setImage} 
+        initialPreview={initialData?.imageUrl}
+      />
 
       {/* Title */}
       <div className="flex flex-col gap-1.5">
@@ -101,10 +112,10 @@ export default function EventForm({ onSubmit, loading }: EventFormProps) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Creating…
+            {initialData ? 'Saving...' : 'Creating…'}
           </span>
         ) : (
-          'Add Event Card'
+          initialData ? 'Save Changes' : 'Add Event Card'
         )}
       </button>
     </form>

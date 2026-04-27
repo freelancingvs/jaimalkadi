@@ -25,6 +25,15 @@ export async function saveCard(card: Card): Promise<void> {
   }
 }
 
+export async function updateCard(slug: string, updates: Partial<Card>): Promise<Card | null> {
+  const existing = await getCard(slug);
+  if (!existing) return null;
+  
+  const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+  await kvSet(`card:${slug}`, updated);
+  return updated;
+}
+
 export async function deleteCard(slug: string): Promise<void> {
   await kvDel(`card:${slug}`);
   const slugs = (await kvGet<string[]>(ALL_SLUGS_KEY)) ?? [];

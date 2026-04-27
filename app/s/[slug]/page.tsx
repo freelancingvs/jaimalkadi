@@ -2,6 +2,7 @@ import { getCard } from '@/lib/cards';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import SmartCTA from '@/components/SmartCTA';
+import CopyAndShareCTA from '@/components/CopyAndShareCTA';
 import Link from 'next/link';
 import Image from 'next/image';
 import BackgroundAudio from '@/components/BackgroundAudio';
@@ -280,6 +281,9 @@ export default async function SharePage({ params }: Props) {
             />
           )}
 
+          {/* Copy and Share */}
+          <CopyAndShareCTA />
+
           {/* Decorative divider */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
 
@@ -355,6 +359,9 @@ export default async function SharePage({ params }: Props) {
             />
           )}
 
+          {/* Copy and Share */}
+          <CopyAndShareCTA />
+
           {/* Decorative divider */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
 
@@ -408,6 +415,9 @@ export default async function SharePage({ params }: Props) {
             />
           </div>
         )}
+
+        {/* Copy and Share */}
+        <CopyAndShareCTA />
 
         {/* Decorative divider */}
         <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />

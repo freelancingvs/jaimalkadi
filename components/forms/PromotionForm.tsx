@@ -7,10 +7,14 @@ import ImageUpload from '@/components/ImageUpload';
 interface PromotionFormProps {
   onSubmit: (data: FormData) => void;
   loading: boolean;
+  initialData?: {
+    message?: string;
+    imageUrl?: string;
+  };
 }
 
-export default function PromotionForm({ onSubmit, loading }: PromotionFormProps) {
-  const [message, setMessage] = useState('');
+export default function PromotionForm({ onSubmit, loading, initialData }: PromotionFormProps) {
+  const [message, setMessage] = useState(initialData?.message || '');
   const [image, setImage] = useState<File | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,7 +28,11 @@ export default function PromotionForm({ onSubmit, loading }: PromotionFormProps)
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <ImageUpload label="Featured Image (for WhatsApp share)" onImageSelect={setImage} />
+      <ImageUpload 
+        label="Featured Image (for WhatsApp share)" 
+        onImageSelect={setImage} 
+        initialPreview={initialData?.imageUrl}
+      />
       
       <div className="rounded-xl bg-amber-500/5 border border-amber-500/15 px-4 py-3">
         <p className="text-xs text-amber-400/80 leading-relaxed">
@@ -57,10 +65,10 @@ export default function PromotionForm({ onSubmit, loading }: PromotionFormProps)
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Creating…
+            {initialData ? 'Saving...' : 'Creating…'}
           </span>
         ) : (
-          'Add Promotion Card'
+          initialData ? 'Save Changes' : 'Add Promotion Card'
         )}
       </button>
     </form>

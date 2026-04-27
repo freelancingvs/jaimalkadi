@@ -293,7 +293,7 @@ export default async function SharePage({ params }: Props) {
           )}
 
           {/* Copy and Share */}
-          <CopyAndShareCTA />
+          <CopyAndShareCTA title={card.title} location={card.location} />
 
           {/* Decorative divider */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
@@ -371,7 +371,7 @@ export default async function SharePage({ params }: Props) {
           )}
 
           {/* Copy and Share */}
-          <CopyAndShareCTA />
+          <CopyAndShareCTA title={card.title} />
 
           {/* Decorative divider */}
           <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
@@ -428,7 +428,7 @@ export default async function SharePage({ params }: Props) {
         )}
 
         {/* Copy and Share */}
-        <CopyAndShareCTA />
+        <CopyAndShareCTA title={card.title || "Promotion"} />
 
         {/* Decorative divider */}
         <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />

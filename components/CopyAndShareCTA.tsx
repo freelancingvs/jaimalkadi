@@ -2,26 +2,38 @@
 
 import { useState } from 'react';
 
-export default function CopyAndShareCTA() {
+interface CopyAndShareCTAProps {
+  title?: string;
+  location?: string;
+}
+
+export default function CopyAndShareCTA({ title, location }: CopyAndShareCTAProps) {
   const [showSnackbar, setShowSnackbar] = useState(false);
 
   const handleAction = async () => {
+    const pageUrl = window.location.href;
+    const shareText = [
+      title ? `🌟 *${title}*` : '🌟 *Sarab Sanjha Darbar*',
+      location ? `📍 Location: ${location}` : null,
+      '',
+      `Check it out here: ${pageUrl}`
+    ].filter(Boolean).join('\n');
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: document.title,
-          url: window.location.href,
+          title: title || 'Sarab Sanjha Darbar',
+          text: shareText,
+          url: pageUrl,
         });
         return;
       } catch (err) {
-        // If user cancelled share, don't fall back to copy
         if (err instanceof Error && err.name === 'AbortError') return;
       }
     }
     
-    // Fallback to copy if navigator.share fails or is unavailable
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareText);
       setShowSnackbar(true);
       setTimeout(() => setShowSnackbar(false), 5000);
     } catch (err) {

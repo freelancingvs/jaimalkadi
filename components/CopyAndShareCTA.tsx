@@ -13,22 +13,26 @@ export default function CopyAndShareCTA({ title, location, imageUrl }: CopyAndSh
 
   const handleAction = async () => {
     const pageUrl = window.location.href;
-    const shareText = [
+    
+    // Base message without the URL for native sharing (to avoid duplication)
+    const baseText = [
       title ? `🌟 *${title}*` : '🌟 *Sarab Sanjha Darbar*',
       location ? `📍 Location: ${location}` : null,
       '',
-      `ਵਧੇਰੇ ਜਾਣਕਾਰੀ (More Details): ${pageUrl}`
+      `ਵਧੇਰੇ ਜਾਣਕਾਰੀ (More Details):`
     ].filter(Boolean).join('\n');
+
+    // Full message for clipboard fallback
+    const fullMessage = `${baseText} ${pageUrl}`;
 
     if (navigator.share) {
       try {
         const shareData: ShareData = {
           title: title || 'Sarab Sanjha Darbar',
-          text: shareText,
+          text: baseText,
           url: pageUrl,
         };
 
-        // Try to include the image file if available
         if (imageUrl && navigator.canShare && navigator.canShare({ files: [] })) {
           try {
             const response = await fetch(imageUrl);
@@ -37,8 +41,6 @@ export default function CopyAndShareCTA({ title, location, imageUrl }: CopyAndSh
             
             if (navigator.canShare({ files: [file] })) {
               shareData.files = [file];
-              // When sharing a file, some platforms ignore the 'text' if 'url' is present,
-              // or vice versa. We include both for best compatibility.
             }
           } catch (e) {
             console.warn('Could not fetch image for sharing:', e);
@@ -53,7 +55,7 @@ export default function CopyAndShareCTA({ title, location, imageUrl }: CopyAndSh
     }
     
     try {
-      await navigator.clipboard.writeText(shareText);
+      await navigator.clipboard.writeText(fullMessage);
       setShowSnackbar(true);
       setTimeout(() => setShowSnackbar(false), 5000);
     } catch (err) {

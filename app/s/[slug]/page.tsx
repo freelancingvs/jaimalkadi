@@ -80,9 +80,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
+          secureUrl: imageUrl,
           width: 1200, 
           height: 630,
           alt: displayTitle,
+          type: imageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg',
         },
       ],
     },
@@ -91,6 +93,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: displayTitle,
       description: cleanDescription,
       images: [imageUrl],
+    },
+    other: {
+      'image': imageUrl,
+      'og:image:alt': displayTitle,
     },
   };
 }

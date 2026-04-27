@@ -130,11 +130,9 @@ export default async function CardList() {
               <CopyLinkButton url={shareUrl} />
               <Link
                 href={`/s/${card.slug}`}
-                target="_blank"
-                rel="noopener"
                 className="text-xs text-zinc-600 hover:text-zinc-300 transition"
               >
-                Preview ↗
+                Preview
               </Link>
               <EditCardButton card={card} />
               <div className="ml-auto">

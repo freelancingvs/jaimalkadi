@@ -20,7 +20,11 @@ async function saveFile(file: File, slug: string, prefix: string): Promise<strin
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const { put } = await import('@vercel/blob');
     const ext = file.name.split('.').pop() || 'tmp';
-    const blob = await put(`${prefix}/${slug}.${ext}`, file, { access: 'public' });
+    const blob = await put(`${prefix}/${slug}.${ext}`, file, { 
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true
+    });
     return blob.url;
   }
 

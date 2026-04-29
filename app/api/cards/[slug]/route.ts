@@ -17,6 +17,20 @@ export async function DELETE(
     return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
   }
 
+  const { getCard } = await import('@/lib/cards');
+  const existingCard = await getCard(slug);
+  if (existingCard) {
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { del } = await import('@vercel/blob');
+      if (existingCard.imageUrl && existingCard.imageUrl.includes('vercel-storage.com')) {
+        try { await del(existingCard.imageUrl); } catch (e) { console.error('Error deleting blob image:', e); }
+      }
+      if (existingCard.audioUrl && existingCard.audioUrl.includes('vercel-storage.com')) {
+        try { await del(existingCard.audioUrl); } catch (e) { console.error('Error deleting blob audio:', e); }
+      }
+    }
+  }
+
   await deleteCard(slug);
   return NextResponse.json({ success: true });
 }
@@ -47,10 +61,20 @@ export async function PATCH(
     const mapUrl = form.get('mapUrl') as string | null;
     const message = form.get('message') as string | null;
     
+    const { updateCard, getCard } = await import('@/lib/cards');
+    const existingCard = await getCard(slug);
+    if (!existingCard) {
+      return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+    }
+
     // Featured image
     const imageFile = form.get('image') as File | null;
     let imageUrl: string | undefined;
     if (imageFile && imageFile.size > 0) {
+      if (process.env.BLOB_READ_WRITE_TOKEN && existingCard.imageUrl && existingCard.imageUrl.includes('vercel-storage.com')) {
+        const { del } = await import('@vercel/blob');
+        try { await del(existingCard.imageUrl); } catch (e) { console.error('Error deleting old blob image:', e); }
+      }
       imageUrl = await saveFile(imageFile, slug, 'images');
     }
 
@@ -58,6 +82,10 @@ export async function PATCH(
     let audioUrl: string | undefined;
     const audioFile = form.get('audio') as File | null;
     if (audioFile && audioFile.size > 0) {
+      if (process.env.BLOB_READ_WRITE_TOKEN && existingCard.audioUrl && existingCard.audioUrl.includes('vercel-storage.com')) {
+        const { del } = await import('@vercel/blob');
+        try { await del(existingCard.audioUrl); } catch (e) { console.error('Error deleting old blob audio:', e); }
+      }
       audioUrl = await saveFile(audioFile, slug, 'audio');
     }
 
@@ -69,7 +97,6 @@ export async function PATCH(
     if (imageUrl) updates.imageUrl = imageUrl;
     if (audioUrl) updates.audioUrl = audioUrl;
 
-    const { updateCard } = await import('@/lib/cards');
     const updated = await updateCard(slug, updates);
 
     if (!updated) {
@@ -93,7 +120,11 @@ async function saveFile(file: File, slug: string, prefix: string): Promise<strin
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const { put } = await import('@vercel/blob');
     const ext = file.name.split('.').pop() || 'tmp';
-    const blob = await put(`${prefix}/${slug}.${ext}`, file, { access: 'public' });
+    const blob = await put(`${prefix}/${slug}.${ext}`, file, { 
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true
+    });
     return blob.url;
   }
 
